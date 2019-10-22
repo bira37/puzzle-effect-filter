@@ -4,3 +4,6 @@ env/
 # Pycache files
 *.pyc 
 
+# VSCode settings
+.vscode
+
