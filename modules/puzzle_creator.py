@@ -20,6 +20,8 @@ class PuzzleCreator:
 
     puzzle_mask = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
 
+    # Draw a bounding box on the puzzle mask
+    cv2.rectangle(puzzle_mask, (0,0), (puzzle_mask.shape[1]-1, puzzle_mask.shape[0]-1), 255, thickness=1)
     # Loop through each square piece
     for i in range(0, puzzle_mask.shape[1], 64):
       for j in range(0, puzzle_mask.shape[0], 64):
