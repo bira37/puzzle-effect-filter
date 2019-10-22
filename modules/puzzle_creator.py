@@ -23,8 +23,8 @@ class PuzzleCreator:
     # Draw a bounding box on the puzzle mask
     cv2.rectangle(puzzle_mask, (0,0), (puzzle_mask.shape[1]-1, puzzle_mask.shape[0]-1), 255, thickness=2)
     # Loop through each square piece
-    for i in range(0, puzzle_mask.shape[1], 64):
-      for j in range(0, puzzle_mask.shape[0], 64):
+    for i in range(0, puzzle_mask.shape[0], 64):
+      for j in range(0, puzzle_mask.shape[1], 64):
 
         # Check if it is not the top border before drawing
         if i != 0:
@@ -81,8 +81,8 @@ class PuzzleCreator:
     # Draw a bounding box on the puzzle mask
     cv2.rectangle(puzzle_mask, (0,0), (puzzle_mask.shape[1]-1, puzzle_mask.shape[0]-1), 255, thickness=2)
     # Loop through each square piece
-    for i in range(0, puzzle_mask.shape[1], 64):
-      for j in range(0, puzzle_mask.shape[0], 64):
+    for i in range(0, puzzle_mask.shape[0], 64):
+      for j in range(0, puzzle_mask.shape[1], 64):
         
         # Check if it is not the upper border before drawing
         if i != 0:
