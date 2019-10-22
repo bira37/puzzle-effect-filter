@@ -1,0 +1,6 @@
+# Environment Folder
+env/
+
+# Pycache files
+*.pyc 
+
