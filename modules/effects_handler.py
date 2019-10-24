@@ -15,4 +15,4 @@ class EffectsHandler:
   # First version of apply method
   @staticmethod
   def apply_v1(image, puzzle_image, puzzle_mask):
-    return puzzle_image
+    return puzzle_image, puzzle_mask

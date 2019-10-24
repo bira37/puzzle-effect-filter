@@ -15,4 +15,4 @@ class TransformationsHandler:
   # First version of transform method   
   @staticmethod
   def transform_v1(image, puzzle_image, puzzle_mask):
-    return puzzle_image, puzzle_mask
+    return puzzle_image

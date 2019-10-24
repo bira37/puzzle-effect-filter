@@ -30,10 +30,10 @@ def main():
   puzzle_image, puzzle_mask = PuzzleCreator.create(original_image)
 
   # Transform the image and the puzzle mask
-  puzzle_image, puzzle_mask = TransformationsHandler.transform(original_image, puzzle_image, puzzle_mask)
+  puzzle_image, puzzle_mask = EffectsHandler.apply(original_image, puzzle_image, puzzle_mask)
 
   # Apply Effects to the image
-  output_image = EffectsHandler.apply(original_image, puzzle_image, puzzle_mask)
+  output_image = TransformationsHandler.transform(original_image, puzzle_image, puzzle_mask)
   
   # Save the output image and the mask
   cv2.imwrite(args.output_path, output_image)
