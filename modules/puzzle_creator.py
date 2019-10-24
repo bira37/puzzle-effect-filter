@@ -159,80 +159,94 @@ class PuzzleCreator:
   # Receives the size of the desired mask
   # Returns the puzzle mask
   @staticmethod
-  def create_puzzle_mask(height, width, thickness):
+  def create_puzzle_mask(height, width, piece_size):
     puzzle_mask = np.zeros((height, width), dtype=np.uint8)
 
     # Draw a bounding box on the puzzle mask
-    cv2.rectangle(puzzle_mask, (0,0), (puzzle_mask.shape[1]-1, puzzle_mask.shape[0]-1), 255, thickness=thickness)
+    cv2.rectangle(puzzle_mask, (0,0), (puzzle_mask.shape[1]-1, puzzle_mask.shape[0]-1), 255, thickness=1)
+
     # Loop through each square piece
-    for i in range(0, puzzle_mask.shape[0], 64):
-      for j in range(0, puzzle_mask.shape[1], 64):
+    for i in range(0, puzzle_mask.shape[0], piece_size):
+      for j in range(0, puzzle_mask.shape[1], piece_size):
         
         # Check if it is not the upper border before drawing
         if i != 0:
-          if (j//64)%2:
-            cv2.ellipse(puzzle_mask, (j+32, i+3), (32, 3), 0, 180 - 70, 180, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+32, i+3), (32, 3), 0, 0, 70, 255, thickness=thickness)
+
+          # Declare useful variables
+          mid_j = (piece_size//2) # 1/2 of piece
+          l_j = (piece_size//3) # 1/3 of piece
+          r_j = (2*piece_size)//3 # 2/3 of piece
+          offset = 0 # piece joint offset
+          half_joint_size = (piece_size//16) # half height of piece joint
+
+          # Draw borders of piece
+          if (j//piece_size)%2:
+            cv2.ellipse(puzzle_mask, (j + l_j, i), (l_j, 2), 0, 180, 270, 255, thickness=1)
+            cv2.ellipse(puzzle_mask, (j + r_j, i), (piece_size - r_j, 2), 0, 270, 360, 255, thickness=1)
+            offset = -2
           else:
-            cv2.ellipse(puzzle_mask, (j+32, i+3), (32, 3), 0, 180, 180 + 70, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+32, i+3), (32, 3), 0, 360 - 70, 360, 255, thickness=thickness)
+            cv2.ellipse(puzzle_mask, (j + l_j, i), (l_j, 2), 0, 90, 180, 255, thickness=1)
+            cv2.ellipse(puzzle_mask, (j + r_j, i), (piece_size - r_j, 2), 0, 0, 90, 255, thickness=1)
+            offset = 2
 
           # Select the piece hole direction
           if np.random.randint(1,3) == 1:
-            # Add an offset from the curve if required
-            offset = 0
-            if (j//64)%2:
-              offset = 6
-            
-            # Draw upwards
-            cv2.ellipse(puzzle_mask, (j+32, i-10 + offset), (10, 8), 0, 135, 360, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+32, i-10 + offset), (10, 8), 0, 0, 45, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+42, i-5 + offset), (2, 5), 0, 90, 270, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+22, i-5 + offset), (2, 5), 0, 270, 360, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+22, i-5 + offset), (2, 5), 0, 0, 90, 255, thickness=thickness)
+            # Draw upwards  
+            cv2.ellipse(puzzle_mask, (j + l_j, i + offset - half_joint_size), (1, half_joint_size), 0, 270, 360, 255, thickness=1)
+            cv2.ellipse(puzzle_mask, (j + l_j, i + offset - half_joint_size), (1, half_joint_size), 0, 0, 90, 255, thickness=1)
+
+            cv2.ellipse(puzzle_mask, (j + r_j, i + offset - half_joint_size), (1, half_joint_size), 0, 90, 270, 255, thickness=1)
+
+            cv2.ellipse(puzzle_mask, (j + mid_j, i + offset - 2*half_joint_size), ((r_j - l_j)//2, (5*half_joint_size)//2), 0, 180, 360, 255, thickness=1)
+
           else:
-            # Add an offset from the curve if required
-            offset = 0
-            if (j//64)%2:
-              offset = 6
-            
             # Draw downwards
-            cv2.ellipse(puzzle_mask, (j+32, i+10 + offset), (10, 8), 0, 0, 225, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+42, i+5 + offset), (2, 5), 0, 90, 270, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+22, i+5 + offset), (2, 5), 0, 270, 360, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+22, i+5 + offset), (2, 5), 0, 0, 90, 255, thickness=thickness)
+            cv2.ellipse(puzzle_mask, (j + l_j, i + offset + half_joint_size), (1, half_joint_size), 0, 270, 360, 255, thickness=1)
+            cv2.ellipse(puzzle_mask, (j + l_j, i + offset + half_joint_size), (1, half_joint_size), 0, 0, 90, 255, thickness=1)
+
+            cv2.ellipse(puzzle_mask, (j + r_j, i + offset + half_joint_size), (1, half_joint_size), 0, 90, 270, 255, thickness=1)
+
+            cv2.ellipse(puzzle_mask, (j + mid_j, i + offset + 2*half_joint_size), ((r_j - l_j)//2, (5*half_joint_size)//2), 0, 0, 180, 255, thickness=1)
+
 
         # Check if it is not the left border before drawing
         if j != 0:
-          if (i//64)%2:
-            cv2.ellipse(puzzle_mask, (j+3, i+32), (3, 32), 0, 270, 270 + 70, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+3, i+32), (3, 32), 0, 90 - 70, 90, 255, thickness=thickness)
+
+          # Declare useful variables
+          mid_i = (piece_size//2) # 1/2 of piece
+          l_i = (piece_size//3) # 1/3 of piece
+          r_i = (2*piece_size)//3 # 2/3 of piece
+          offset = 0 # piece joint offset
+          half_joint_size = (piece_size//16) # half height of piece joint
+
+          # Draw borders of piece
+          if (i//piece_size)%2:
+            cv2.ellipse(puzzle_mask, (j, i + l_i), (2, l_i), 0, 270, 360, 255, thickness=1)
+            cv2.ellipse(puzzle_mask, (j, i + r_i), (2, l_i), 0, 0, 90, 255, thickness=1)
+            offset = 2
           else:
-            cv2.ellipse(puzzle_mask, (j+3, i+32), (3, 32), 0, 90, 90 + 70, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+3, i+32), (3, 32), 0, 270 - 70, 270, 255, thickness=thickness)
-          
+            cv2.ellipse(puzzle_mask, (j, i + l_i), (2, l_i), 0, 180, 270, 255, thickness=1)
+            cv2.ellipse(puzzle_mask, (j, i + r_i), (2, l_i), 0, 90, 180, 255, thickness=1)
+            offset = -2
+            
           # Select the piece hole direction
           if np.random.randint(1,3) == 1:
-            # Add an offset from the curve if needed
-            offset = 0
-            if (i//64)%2:
-              offset = 6
-
             # Draw to the left
-            cv2.ellipse(puzzle_mask, (j-10 + offset, i+32), (8, 10), 0, 45, 315, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j-5 + offset, i+22), (5, 2), 0, 0, 180, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j-5 + offset, i+42), (5, 2), 0, 180, 360, 255, thickness=thickness)
-          else:
-            # Add an offset from the curve if needed
-            offset = 0
-            if (i//64)%2:
-              offset = 6
+            cv2.ellipse(puzzle_mask, (j + offset - half_joint_size, i + l_i), (half_joint_size, 1), 0, 0, 180, 255, thickness=1)
 
+            cv2.ellipse(puzzle_mask, (j + offset - half_joint_size, i + r_i), (half_joint_size, 1), 0, 180, 360, 255, thickness=1)
+
+            cv2.ellipse(puzzle_mask, (j + offset - 2*half_joint_size, i + mid_i), ((5*half_joint_size)//2, (r_i - l_i)//2), 0, 90, 270, 255, thickness=1)
+
+          else:
             # Draw to the right
-            cv2.ellipse(puzzle_mask, (j+10 + offset, i+32), (8, 10), 0, 270, 360, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+10 + offset, i+32), (8, 10), 0, 0, 135, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+5 + offset, i+22), (5, 2), 0, 0, 180, 255, thickness=thickness)
-            cv2.ellipse(puzzle_mask, (j+5 + offset, i+42), (5, 2), 0, 180, 360, 255, thickness=thickness)
+            cv2.ellipse(puzzle_mask, (j + offset + half_joint_size, i + l_i), (half_joint_size, 1), 0, 0, 180, 255, thickness=1)
+
+            cv2.ellipse(puzzle_mask, (j + offset + half_joint_size, i + r_i), (half_joint_size, 1), 0, 180, 360, 255, thickness=1)
+
+            cv2.ellipse(puzzle_mask, (j + offset + 2*half_joint_size, i + mid_i), ((5*half_joint_size)//2, (r_i - l_i)//2), 0, 270, 360, 255, thickness=1)
+
+            cv2.ellipse(puzzle_mask, (j + offset + 2*half_joint_size, i + mid_i), ((5*half_joint_size)//2, (r_i - l_i)//2), 0, 0, 90, 255, thickness=1)
 
     # Return the puzzle mask
     return puzzle_mask
@@ -244,16 +258,14 @@ class PuzzleCreator:
 
     # Select the desired type and draw
     if type == 'big':
-      puzzle_mask = cls.create_puzzle_mask(image.shape[0]//2, image.shape[1]//2, thickness = 1)
-      puzzle_mask = cv2.resize(puzzle_mask, (image.shape[0], image.shape[1]))
-      dummy_return, puzzle_mask = cv2.threshold(puzzle_mask, 1, 255, cv2.THRESH_BINARY)
+      puzzle_mask = cls.create_puzzle_mask(image.shape[0], image.shape[1], piece_size = 128)
 
     elif type == 'small':
-      puzzle_mask = cls.create_puzzle_mask(2*image.shape[0], 2*image.shape[1], thickness = 2)
+      puzzle_mask = cls.create_puzzle_mask(2*image.shape[0], 2*image.shape[1], piece_size = 64)
       puzzle_mask = cv2.resize(puzzle_mask, (image.shape[0], image.shape[1]))
       dummy_return, puzzle_mask = cv2.threshold(puzzle_mask, 1, 255, cv2.THRESH_BINARY)
     else:
-      puzzle_mask = cls.create_puzzle_mask(image.shape[0], image.shape[1], thickness = 2)
+      puzzle_mask = cls.create_puzzle_mask(image.shape[0], image.shape[1], piece_size = 64)
 
     # Draw the puzzle on the image
     puzzle_image = image.copy()
