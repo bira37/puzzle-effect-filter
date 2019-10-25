@@ -3,8 +3,8 @@ import argparse
 import numpy as np 
 import os
 from modules.puzzle_creator import PuzzleCreator
-from modules.effects_handler import EffectsHandler
-from modules.transformations_handler import TransformationsHandler
+import modules.effects as effects
+import modules.transformations as transformations
 
 def main():
 
@@ -42,15 +42,15 @@ def main():
   puzzle_image, puzzle_mask = PuzzleCreator.create(original_image, args.type)
 
   # Apply effects to the image
-  puzzle_image, puzzle_mask = EffectsHandler.apply(original_image, puzzle_image, puzzle_mask)
+  puzzle_image, puzzle_mask = effects.apply_v1(original_image, puzzle_image, puzzle_mask)
 
   # Transform the image and the puzzle mask
-  transformed_image = TransformationsHandler.transform(original_image, puzzle_image, puzzle_mask)
+  transformed_image = transformations.transform_v1(original_image, puzzle_image, puzzle_mask)
 
-  padded_image = TransformationsHandler.add_padding(transformed_image, background_image.shape)
+  padded_image = transformations.add_padding(transformed_image, background_image.shape)
 
   # Add background to image
-  output_image = EffectsHandler.add_background(background_image, padded_image)
+  output_image = effects.add_background(background_image, padded_image)
   
   # Save the output image and the mask
   cv2.imwrite(args.output_path, output_image)
