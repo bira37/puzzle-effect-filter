@@ -11,6 +11,7 @@ def main():
   # Define and parse the arguments
   parser = argparse.ArgumentParser()
 
+  parser.add_argument('-b', '--background_path', dest='background_path', type=str, default='examples/wooden_table.png', help='Path to the background image.')
   parser.add_argument('-i', '--input_path', dest='input_path', type=str, default='examples/lena.png', help='Path to the input image.')
   parser.add_argument('-o', '--output_path', dest='output_path', type=str, default='output.png', help='Path to save the output image (directory and name). Make sure that the directory exists.')
   parser.add_argument('-t', '--type', dest='type', type=str, default='normal', help='puzzle size (small, normal or big)')
@@ -27,6 +28,16 @@ def main():
     print('Error: {}'.format(err))
     exit(1)
   
+  # Read background image
+  background_image = cv2.imread(args.background_path)
+
+  # Check if background image exists
+  try:
+    assert (background_image is not None), 'Background image does not exist.'
+  except AssertionError as err:
+    print('Error: {}'.format(err))
+    exit(1)
+
   # Create the puzzle mask and the puzzle image
   puzzle_image, puzzle_mask = PuzzleCreator.create(original_image, args.type)
 
@@ -34,7 +45,12 @@ def main():
   puzzle_image, puzzle_mask = EffectsHandler.apply(original_image, puzzle_image, puzzle_mask)
 
   # Transform the image and the puzzle mask
-  output_image = TransformationsHandler.transform(original_image, puzzle_image, puzzle_mask)
+  transformed_image = TransformationsHandler.transform(original_image, puzzle_image, puzzle_mask)
+
+  padded_image = TransformationsHandler.add_padding(transformed_image, background_image.shape)
+
+  # Add background to image
+  output_image = EffectsHandler.add_background(background_image, padded_image)
   
   # Save the output image and the mask
   cv2.imwrite(args.output_path, output_image)
