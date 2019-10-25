@@ -13,6 +13,7 @@ def main():
 
   parser.add_argument('-i', '--input_path', dest='input_path', type=str, default='examples/lena.png', help='Path to the input image.')
   parser.add_argument('-o', '--output_path', dest='output_path', type=str, default='output.png', help='Path to save the output image (directory and name). Make sure that the directory exists.')
+  parser.add_argument('-t', '--type', dest='type', type=str, default='normal', help='puzzle size (small, normal or big)')
 
   args = parser.parse_args()
 
@@ -27,12 +28,12 @@ def main():
     exit(1)
   
   # Create the puzzle mask and the puzzle image
-  puzzle_image, puzzle_mask = PuzzleCreator.create(original_image)
+  puzzle_image, puzzle_mask = PuzzleCreator.create(original_image, args.type)
 
-  # Transform the image and the puzzle mask
+  # Apply effects to the image
   puzzle_image, puzzle_mask = EffectsHandler.apply(original_image, puzzle_image, puzzle_mask)
 
-  # Apply Effects to the image
+  # Transform the image and the puzzle mask
   output_image = TransformationsHandler.transform(original_image, puzzle_image, puzzle_mask)
   
   # Save the output image and the mask
