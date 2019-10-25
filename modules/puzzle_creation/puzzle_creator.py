@@ -114,5 +114,7 @@ def create(image, type):
   puzzle_image = image.copy()
   puzzle_image = cv2.bitwise_or(puzzle_image, np.dstack([puzzle_mask]*3))
 
+  puzzle_mask = np.expand_dims(puzzle_mask, axis=2)
+
   # Return the puzzle image and mask
   return puzzle_image, puzzle_mask

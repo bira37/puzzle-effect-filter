@@ -35,5 +35,8 @@ def add_background(background, foreground):
   # add background and foreground images
   blended = cv2.add(background, foreground)
 
+  # Change mask scale from [0, 1] to [0, 255]
+  alpha_mask *= 255
+
   # return blended image
-  return blended
+  return blended, alpha_mask
