@@ -2,7 +2,7 @@ import cv2
 import argparse
 import numpy as np 
 import os
-from modules.puzzle_creator import PuzzleCreator
+import modules.puzzle_creation as puzzle_creation
 import modules.effects as effects
 import modules.transformations as transformations
 
@@ -39,19 +39,16 @@ def main():
     exit(1)
 
   # Create the puzzle mask and the puzzle image
-  puzzle_image, puzzle_mask = PuzzleCreator.create(original_image, args.type)
+  puzzle_image, puzzle_mask = puzzle_creation.create(original_image, args.type)
 
-  # Apply effects to the image
-  puzzle_image, puzzle_mask = effects.apply_v1(original_image, puzzle_image, puzzle_mask)
-
-  # Transform the image and the puzzle mask
-  transformed_image = transformations.transform_v1(original_image, puzzle_image, puzzle_mask)
-
-  padded_image = transformations.add_padding(transformed_image, background_image.shape)
+  padded_image = transformations.add_padding(puzzle_image, background_image.shape)
 
   # Add background to image
   output_image = effects.add_background(background_image, padded_image)
   
+  # Apply relief and shadow effects to the image
+  # TODO
+
   # Save the output image and the mask
   cv2.imwrite(args.output_path, output_image)
 

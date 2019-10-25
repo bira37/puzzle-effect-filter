@@ -1,9 +1,6 @@
 import cv2
 import numpy as np
 
-def transform_v1(image, puzzle_image, puzzle_mask):
-  return puzzle_image
-
 # Input: Image and padding shape
 # Output: Padded image
 def add_padding(image, padding_shape):
