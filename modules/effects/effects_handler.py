@@ -38,5 +38,7 @@ def add_background(background, foreground):
   # Change mask scale from [0, 1] to [0, 255]
   alpha_mask *= 255
 
+  alpha_mask = 255 - alpha_mask
+
   # return blended image
-  return blended, alpha_mask
+  return blended

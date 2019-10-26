@@ -47,10 +47,10 @@ def main():
   puzzle_image, puzzle_mask = transformations.transform_v1(puzzle_image, puzzle_mask, args.type, background_shape)
   
   # Add background to image
-  puzzle_image, puzzle_mask = effects.add_background(background_image, puzzle_image)
+  puzzle_image = effects.add_background(background_image, puzzle_image)
   
   # Apply relief and shadow effects to the image
-  # TODO
+  #TODO
 
   # Save the output image and the mask
   cv2.imwrite(args.output_path, puzzle_image)
