@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # Input
-def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape=None):
+def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
 
   # Get piece size based on type
   type_to_size = {'big':128, 'normal':64, 'small':32}
@@ -41,7 +41,8 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape=None):
               vis[x + dx[k], y + dy[k]] = True
               q.append((x + dx[k], y + dy[k]))
 
-  if background_shape is not None:
+  # Check if background and original shapes are different
+  if background_shape != puzzle_image.shape:
     puzzle_image = add_padding(puzzle_image, background_shape)
     puzzle_mask = add_padding(puzzle_mask, background_shape)
 

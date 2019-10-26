@@ -11,7 +11,7 @@ def main():
   # Define and parse the arguments
   parser = argparse.ArgumentParser()
 
-  parser.add_argument('-b', '--background_path', dest='background_path', type=str, default=None, help='Path to the background image.')
+  parser.add_argument('-b', '--background_path', dest='background_path', type=str, default=None, help='Path to the background image. Default is white background')
   parser.add_argument('-i', '--input_path', dest='input_path', type=str, default='examples/lena.png', help='Path to the input image.')
   parser.add_argument('-o', '--output_path', dest='output_path', type=str, default='output.png', help='Path to save the output image (directory and name). Make sure that the directory exists.')
   parser.add_argument('-t', '--type', dest='type', type=str, default='normal', help='puzzle size (small, normal or big)')
@@ -31,27 +31,23 @@ def main():
   # Create the puzzle mask and the puzzle image
   puzzle_image, puzzle_mask = puzzle_creation.create(original_image, args.type)
 
-  # Initialize background related variables with None
-  background_image = None
-  background_shape = None
+  # Read background image
+  background_image = cv2.imread(args.background_path)
 
-  # Check if background image exists
-  if args.background_path is not None:
+  # If background image is None
+  if background_image is None:
 
-    # Read background image
-    background_image = cv2.imread(args.background_path)
+    # Create white background image
+    background_image = np.full(puzzle_image.shape, (255, 255, 255), dtype=np.uint8)
 
-    # Get background shape
-    background_shape = background_image.shape
+  # Get background shape
+  background_shape = background_image.shape
 
   # Transform image
   puzzle_image, puzzle_mask = transformations.transform_v1(puzzle_image, puzzle_mask, args.type, background_shape)
   
-  # Check if background image exists
-  if background_image is not None:
-
-    # Add background to image
-    puzzle_image, puzzle_mask = effects.add_background(background_image, puzzle_image)
+  # Add background to image
+  puzzle_image, puzzle_mask = effects.add_background(background_image, puzzle_image)
   
   # Apply relief and shadow effects to the image
   # TODO
