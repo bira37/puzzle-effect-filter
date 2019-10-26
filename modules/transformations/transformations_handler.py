@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import queue
 
 # Input
 def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
@@ -9,8 +10,7 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
   piece_size = type_to_size[piece_type]
 
   # Create visited matrix
-  # Initially the puzzle borders are setted as visited
-  vis = puzzle_mask >= 1
+  vis = np.zeros(puzzle_mask.shape)
 
   # Create offset lists
   dx = [-1,  0, 0, 1]
@@ -27,25 +27,37 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
       # Randomly pick pieces to transform
       if vis[i, j] == False and np.random.randint(1,20) == 1:
         # Do a BFS to visit each pixel of the piece with center at (i, j)
-        q = []
-        q.append((i, j))
-        while q:
-          x, y = q.pop(0)
+        q = queue.Queue(maxsize = 0)
+        q.put((i, j))
+        while not q.empty():
+          x, y = q.get()
 
           # Turn each pixel from the piece with center at (i, j) black
           puzzle_image[x, y] = 0
+
+          # If it's a border, delete its neighbors and mark them as visited 
+          if puzzle_mask[x,y] == 255:
+            puzzle_mask[x,y] = 0
+            puzzle_image[x,y] = 0
+            vx = [0, 1, 0, -1, 1, -1, 1, -1]
+            vy = [1, 0, -1, 0, 1, 1, -1, -1]
+            for k in range(0, 8):
+              if 0 <= x + vx[k] < rows and 0 <= y + vy[k] < cols and vis[x + vx[k], y + vy[k]] == False:
+                vis[x + vx[k], y + vy[k]] = True
+                puzzle_mask[x + vx[k], y + vy[k]] = 0
+                puzzle_image[x + vx[k], y + vy[k]] = 0
 
           # Iterate over adjacents
           for k in range(0, 4):
             if 0 <= x + dx[k] < rows and 0 <= y + dy[k] < cols and vis[x + dx[k], y + dy[k]] == False:
               vis[x + dx[k], y + dy[k]] = True
-              q.append((x + dx[k], y + dy[k]))
+              q.put((x + dx[k], y + dy[k]))
 
   # Check if background and original shapes are different
   if background_shape != puzzle_image.shape:
     puzzle_image = add_padding(puzzle_image, background_shape)
     puzzle_mask = add_padding(puzzle_mask, background_shape)
-
+    
   return puzzle_image, puzzle_mask
 
 # Input: Image and padding shape
