@@ -20,9 +20,22 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
   rows = puzzle_image.shape[0]
   cols = puzzle_image.shape[1]
 
+  # Create foreground_mask, where 1 is foreground and 0 background
+  foreground_mask = np.full(puzzle_image.shape, (1, 1, 1), dtype=np.uint8)
+
+  # Initialize variables
+  puzzle_i = 0
+  puzzle_j = 0
+
+  # Check if background and original shapes are different
+  if background_shape != puzzle_image.shape:
+    puzzle_image, puzzle_i, puzzle_j = add_padding(puzzle_image, background_shape)
+    puzzle_mask, _, _ = add_padding(puzzle_mask, background_shape)
+    foreground_mask, _, _ = add_padding(foreground_mask, background_shape)
+
   # Iterate over centers of all pieces
-  for i in range(piece_size // 2, rows, piece_size):
-    for j in range(piece_size // 2, cols, piece_size):
+  for i in range(puzzle_i + piece_size // 2, rows, piece_size):
+    for j in range(puzzle_j + piece_size // 2, cols, piece_size):
 
       # Randomly pick pieces to transform
       if vis[i, j] == False and np.random.randint(1,20) == 1:
@@ -34,11 +47,13 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
 
           # Turn each pixel from the piece with center at (i, j) black
           puzzle_image[x, y] = 0
+          foreground_mask[x, y] = 0
 
           # If it's a border, delete its neighbors and mark them as visited 
           if puzzle_mask[x,y] == 255:
             puzzle_mask[x,y] = 0
             puzzle_image[x,y] = 0
+            foreground_mask[x, y] = 0
             vx = [0, 1, 0, -1, 1, -1, 1, -1]
             vy = [1, 0, -1, 0, 1, 1, -1, -1]
             for k in range(0, 8):
@@ -46,6 +61,7 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
                 vis[x + vx[k], y + vy[k]] = True
                 puzzle_mask[x + vx[k], y + vy[k]] = 0
                 puzzle_image[x + vx[k], y + vy[k]] = 0
+                foreground_mask[x + vx[k], y + vy[k]] = 0
 
           # Iterate over adjacents
           for k in range(0, 4):
@@ -53,12 +69,8 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
               vis[x + dx[k], y + dy[k]] = True
               q.put((x + dx[k], y + dy[k]))
 
-  # Check if background and original shapes are different
-  if background_shape != puzzle_image.shape:
-    puzzle_image = add_padding(puzzle_image, background_shape)
-    puzzle_mask = add_padding(puzzle_mask, background_shape)
     
-  return puzzle_image, puzzle_mask
+  return puzzle_image, puzzle_mask, foreground_mask
 
 # Input: Image and padding shape
 # Output: Padded image
@@ -84,4 +96,4 @@ def add_padding(image, padding_shape):
   # Center image on padded image
   padded_image[left_corner_x:left_corner_x + image.shape[0], left_corner_y:left_corner_y + image.shape[1]] = image
 
-  return padded_image
+  return padded_image, left_corner_x, left_corner_y

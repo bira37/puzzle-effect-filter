@@ -5,12 +5,6 @@ import numpy as np
 def apply_v1(image, puzzle_image, puzzle_mask):
   return puzzle_image, puzzle_mask
 
-# Invert the puzzle edges color from white to black
-def invert_edges(puzzle_image, puzzle_mask):
-  expanded_mask = np.dstack([puzzle_mask]*3)
-  puzzle_image[expanded_mask == 255] = 0
-  return puzzle_image
-
 # Input: The image, image with the puzzle and the puzzle mask
 # Output: The puzzle image with shadow effect applied and the puzzle mask
 def apply_relief_and_shadow(puzzle_image, puzzle_mask):
@@ -37,7 +31,7 @@ def apply_relief_and_shadow(puzzle_image, puzzle_mask):
 
 #Input: The background image and the foreground image (both must have the same shape)
 #Output: The original image with a background
-def add_background(background, foreground):
+def add_background(background, foreground, alpha_mask):
 
   # Check if images have the same shape
   try:
@@ -53,9 +47,6 @@ def add_background(background, foreground):
     print('Error: {}'.format(err))
     exit(1)
 
-  # create alpha blending mask
-  _, alpha_mask = cv2.threshold(foreground, 0, 1, cv2.THRESH_BINARY)
-
   # apply mask to foreground image
   foreground = cv2.multiply(alpha_mask, foreground)
 
@@ -64,11 +55,6 @@ def add_background(background, foreground):
 
   # add background and foreground images
   blended = cv2.add(background, foreground)
-
-  # Change mask scale from [0, 1] to [0, 255]
-  alpha_mask *= 255
-
-  alpha_mask = 255 - alpha_mask
 
   # return blended image
   return blended
