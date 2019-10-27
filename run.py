@@ -46,14 +46,14 @@ def main():
   # Transform image
   puzzle_image, puzzle_mask = transformations.transform_v1(puzzle_image, puzzle_mask, args.type, background_shape)
 
-  # Invert the color of the edges (to make background visible on the edges)
+  # Invert the color of the edges (to make background visible on the edges to make use of add_background)
   puzzle_image = effects.invert_edges(puzzle_image, puzzle_mask)
-  
+
   # Add background to image
   puzzle_image = effects.add_background(background_image, puzzle_image)
   
   # Apply relief and shadow effects to the image
-  #TODO
+  puzzle_image, puzzle_mask = effects.apply_relief_and_shadow(puzzle_image, puzzle_mask)
 
   # Save the output image and the mask
   cv2.imwrite(args.output_path, puzzle_image)

@@ -11,6 +11,39 @@ def invert_edges(puzzle_image, puzzle_mask):
   puzzle_image[expanded_mask == 255] = 0
   return puzzle_image
 
+# Input: The image, image with the puzzle and the puzzle mask
+# Output: The puzzle image with shadow effect applied and the puzzle mask
+def apply_relief_and_shadow(puzzle_image, puzzle_mask):
+  # Create and apply emboss filter
+  kernel = np.zeros((3,3))
+  kernel[0,1] = -1
+  kernel[2,1] = 1
+  kernel[0,0] = -1
+  kernel[2,2] = 1
+  effect_mask = cv2.filter2D(puzzle_mask, -1, kernel)
+
+  cv2.imshow('effect', puzzle_mask)
+  cv2.waitKey(0)
+
+  cv2.imshow('effect', effect_mask)
+  cv2.waitKey(0)
+  
+  # Invert the mask
+  effect_mask = 255 - effect_mask
+
+  cv2.imshow('effect', effect_mask)
+  cv2.waitKey(0)
+
+  # Apply the mask
+  puzzle_image = cv2.bitwise_or(puzzle_image, puzzle_image, mask = effect_mask)
+
+  # Apply a small blur to soften the edges
+  puzzle_image = cv2.GaussianBlur(puzzle_image, (3,3), sigmaX = 1.5, sigmaY = 1.5)
+  puzzle_image = puzzle_image.astype(np.uint8)
+
+  # Return the result
+  return puzzle_image, puzzle_mask
+
 #Input: The background image and the foreground image (both must have the same shape)
 #Output: The original image with a background
 def add_background(background, foreground):
