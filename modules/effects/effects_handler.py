@@ -5,6 +5,12 @@ import numpy as np
 def apply_v1(image, puzzle_image, puzzle_mask):
   return puzzle_image, puzzle_mask
 
+# Invert the puzzle edges color from white to black
+def invert_edges(puzzle_image, puzzle_mask):
+  expanded_mask = np.dstack([puzzle_mask]*3)
+  puzzle_image[expanded_mask == 255] = 0
+  return puzzle_image
+
 #Input: The background image and the foreground image (both must have the same shape)
 #Output: The original image with a background
 def add_background(background, foreground):

@@ -45,6 +45,9 @@ def main():
 
   # Transform image
   puzzle_image, puzzle_mask = transformations.transform_v1(puzzle_image, puzzle_mask, args.type, background_shape)
+
+  # Invert the color of the edges (to make background visible on the edges)
+  puzzle_image = effects.invert_edges(puzzle_image, puzzle_mask)
   
   # Add background to image
   puzzle_image = effects.add_background(background_image, puzzle_image)
