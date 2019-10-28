@@ -5,7 +5,6 @@ import numpy as np
 # Returns the puzzle mask
 def create_puzzle_mask(height, width, piece_size, thickness):
   puzzle_mask = np.zeros((height, width), dtype=np.uint8)
-
   # Draw a bounding box on the puzzle mask
   cv2.rectangle(puzzle_mask, (0,0), (puzzle_mask.shape[1]-1, puzzle_mask.shape[0]-1), 255, thickness=thickness)
 
@@ -85,7 +84,7 @@ def create(image, type):
 
   elif type == 'small':
     puzzle_mask = create_puzzle_mask(2*image.shape[0], 2*image.shape[1], piece_size = 64, thickness = 3)
-    puzzle_mask = cv2.resize(puzzle_mask, (image.shape[0], image.shape[1]))
+    puzzle_mask = cv2.resize(puzzle_mask, (image.shape[1], image.shape[0]))
     dummy_return, puzzle_mask = cv2.threshold(puzzle_mask, 1, 255, cv2.THRESH_BINARY)
   else:
     puzzle_mask = create_puzzle_mask(image.shape[0], image.shape[1], piece_size = 64, thickness = 2)
