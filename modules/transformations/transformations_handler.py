@@ -69,6 +69,13 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
               vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] = True
               q.put((x + dx[k], y + dy[k]))
 
+  # Fix some borders imperfections when pieces are deleted
+  kernel = np.ones((7,7), dtype=np.int16)
+  kernel[3,3] = 0
+  filtered_mask = puzzle_mask.astype(np.int16)
+  filtered_mask = cv2.filter2D(filtered_mask, -1, kernel)
+  puzzle_mask[filtered_mask <= 255] = 0
+
   # Delete borders from foreground
   foreground_mask[puzzle_mask == 255] = 0  
   foreground_mask = np.dstack([foreground_mask]*3)
