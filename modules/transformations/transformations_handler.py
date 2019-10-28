@@ -42,6 +42,7 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
         # Do a BFS to visit each pixel of the piece with center at (i, j)
         q = queue.Queue(maxsize = 0)
         q.put((i, j))
+        vis[i - puzzle_i, j - puzzle_j] = True
         while not q.empty():
           x, y = q.get()
 
@@ -57,7 +58,7 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
             vx = [0, 1, 0, -1, 1, -1, 1, -1]
             vy = [1, 0, -1, 0, 1, 1, -1, -1]
             for k in range(0, 8):
-              if 0 <= x + vx[k] < rows and 0 <= y + vy[k] < cols and vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] == False:
+              if puzzle_i <= x + vx[k] < rows + puzzle_i and puzzle_j <= y + vy[k] < cols + puzzle_j and vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] == False:
                 vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] = True
                 puzzle_mask[x + vx[k], y + vy[k]] = 0
                 puzzle_image[x + vx[k], y + vy[k]] = 0
@@ -65,7 +66,7 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
 
           # Iterate over adjacents
           for k in range(0, 4):
-            if 0 <= x + dx[k] < rows and 0 <= y + dy[k] < cols and vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] == False:
+            if puzzle_i <= x + dx[k] < rows + puzzle_i and puzzle_j <= y + dy[k] < cols + puzzle_j and vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] == False:
               vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] = True
               q.put((x + dx[k], y + dy[k]))
 
