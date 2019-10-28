@@ -3,7 +3,7 @@ import numpy as np
 import queue
 
 # Input
-def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
+def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape, n_moving_pieces):
 
   # Get piece size based on type
   type_to_size = {'big':128, 'normal':64, 'small':32}
@@ -33,42 +33,56 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
     puzzle_mask, _, _ = add_padding(puzzle_mask, background_shape)
     foreground_mask, _, _ = add_padding(foreground_mask, background_shape)
 
-  # Iterate over centers of all pieces
-  for i in range(puzzle_i + piece_size // 2, puzzle_i + rows, piece_size):
-    for j in range(puzzle_j + piece_size // 2, puzzle_j + cols, piece_size):
+  # create array with pieces indices
+  indices = np.indices((rows // piece_size, cols // piece_size)).transpose((1, 2, 0))
+  indices = indices.reshape(((rows // piece_size * cols // piece_size), 2))
+  indices = np.random.permutation(indices)
+  
+  # if n_moving_pieces is bigger than the number of pieces
+  # n_moving_pices = number of pieces
+  n_moving_pieces = np.minimum(len(indices), n_moving_pieces)
 
-      # Randomly pick pieces to transform
-      if vis[i - puzzle_i, j - puzzle_j] == False and np.random.randint(1,20) == 1:
-        # Do a BFS to visit each pixel of the piece with center at (i, j)
-        q = queue.Queue(maxsize = 0)
-        q.put((i, j))
-        vis[i - puzzle_i, j - puzzle_j] = True
-        while not q.empty():
-          x, y = q.get()
+  # iterate over pieces indices 
+  for ind in range(0, n_moving_pieces):
+    
+    # get image coordinate from index
+    i, j = index_to_coordinate(indices[ind], piece_size)
+    
+    # add image offset to coordinates
+    i += puzzle_i
+    j += puzzle_j
 
-          # Turn each pixel from the piece with center at (i, j) black
-          puzzle_image[x, y] = 0
-          foreground_mask[x, y] = 0
+    # Do a BFS to visit each pixel of the piece with center at (i, j)
+    q = queue.Queue(maxsize = 0)
+    q.put((i, j))
+    vis[i - puzzle_i, j - puzzle_j] = True
 
-          # If it's a border, delete its neighbors and mark them as visited 
-          if puzzle_mask[x,y] == 255:
-            puzzle_mask[x,y] = 0
-            puzzle_image[x,y] = 0
-            foreground_mask[x, y] = 0
-            vx = [0, 1, 0, -1, 1, -1, 1, -1]
-            vy = [1, 0, -1, 0, 1, 1, -1, -1]
-            for k in range(0, 8):
-              if puzzle_i <= x + vx[k] < rows + puzzle_i and puzzle_j <= y + vy[k] < cols + puzzle_j and vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] == False:
-                vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] = True
-                puzzle_mask[x + vx[k], y + vy[k]] = 0
-                puzzle_image[x + vx[k], y + vy[k]] = 0
-                foreground_mask[x + vx[k], y + vy[k]] = 0
+    while not q.empty():
+      x, y = q.get()
 
-          # Iterate over adjacents
-          for k in range(0, 4):
-            if puzzle_i <= x + dx[k] < rows + puzzle_i and puzzle_j <= y + dy[k] < cols + puzzle_j and vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] == False:
-              vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] = True
-              q.put((x + dx[k], y + dy[k]))
+      # Turn each pixel from the piece with center at (i, j) black
+      puzzle_image[x, y] = 0
+      foreground_mask[x, y] = 0
+
+      # If it's a border, delete its neighbors and mark them as visited 
+      if puzzle_mask[x,y] == 255:
+        puzzle_mask[x,y] = 0
+        puzzle_image[x,y] = 0
+        foreground_mask[x, y] = 0
+        vx = [0, 1, 0, -1, 1, -1, 1, -1]
+        vy = [1, 0, -1, 0, 1, 1, -1, -1]
+        for k in range(0, 8):
+          if puzzle_i <= x + vx[k] < rows + puzzle_i and puzzle_j <= y + vy[k] < cols + puzzle_j and vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] == False:
+            vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] = True
+            puzzle_mask[x + vx[k], y + vy[k]] = 0
+            puzzle_image[x + vx[k], y + vy[k]] = 0
+            foreground_mask[x + vx[k], y + vy[k]] = 0
+
+      # Iterate over adjacents
+      for k in range(0, 4):
+        if puzzle_i <= x + dx[k] < rows + puzzle_i and 0 <= y + dy[k] < cols + puzzle_j and vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] == False:
+          vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] = True
+          q.put((x + dx[k], y + dy[k]))
 
   # Fix some borders imperfections when pieces are deleted
   kernel = np.ones((7,7), dtype=np.int16)
@@ -107,3 +121,9 @@ def add_padding(image, padding_shape):
   padded_image[left_corner_x:left_corner_x + image.shape[0], left_corner_y:left_corner_y + image.shape[1]] = image
 
   return padded_image, left_corner_x, left_corner_y
+
+def index_to_coordinate(index, piece_size):
+  i, j = index
+  i_coord = i * piece_size + piece_size // 2
+  j_coord = j * piece_size + piece_size // 2
+  return i_coord, j_coord 

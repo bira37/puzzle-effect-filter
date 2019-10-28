@@ -13,6 +13,7 @@ def main():
 
   parser.add_argument('-b', '--background_path', dest='background_path', type=str, default=None, help='Path to the background image. Default is white background')
   parser.add_argument('-i', '--input_path', dest='input_path', type=str, default='examples/lena.png', help='Path to the input image.')
+  parser.add_argument('-n', '--n_moving_pieces', dest='n_moving_pieces', type=int, default=3, help='Number of pieces that are going to be moved. If the number given is bigger than the number of pieces, the default behaviour it to assume n_moving_pieces = number of pieces in the puzzle.')
   parser.add_argument('-o', '--output_path', dest='output_path', type=str, default='output.png', help='Path to save the output image (directory and name). Make sure that the directory exists.')
   parser.add_argument('-t', '--type', dest='type', type=str, default='normal', help='puzzle size (small, normal or big)')
 
@@ -44,7 +45,7 @@ def main():
   background_shape = background_image.shape
 
   # Transform image
-  puzzle_image, puzzle_mask, foreground_mask = transformations.transform_v1(puzzle_image, puzzle_mask, args.type, background_shape)
+  puzzle_image, puzzle_mask, foreground_mask = transformations.transform_v1(puzzle_image, puzzle_mask, args.type, background_shape, args.n_moving_pieces)
 
   # Add background to image
   puzzle_image = effects.add_background(background_image, puzzle_image, foreground_mask)
