@@ -21,7 +21,7 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
   cols = puzzle_image.shape[1]
 
   # Create foreground_mask, where 1 is foreground and 0 background
-  foreground_mask = np.full(puzzle_image.shape, (1, 1, 1), dtype=np.uint8)
+  foreground_mask = np.full(puzzle_mask.shape, 1, dtype=np.uint8)
 
   # Initialize variables
   puzzle_i = 0
@@ -69,7 +69,9 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
               vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] = True
               q.put((x + dx[k], y + dy[k]))
 
-    
+  # Delete borders from foreground
+  foreground_mask[puzzle_mask == 255] = 0  
+  foreground_mask = np.dstack([foreground_mask]*3)
   return puzzle_image, puzzle_mask, foreground_mask
 
 # Input: Image and padding shape
