@@ -34,11 +34,11 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
     foreground_mask, _, _ = add_padding(foreground_mask, background_shape)
 
   # Iterate over centers of all pieces
-  for i in range(puzzle_i + piece_size // 2, rows, piece_size):
-    for j in range(puzzle_j + piece_size // 2, cols, piece_size):
+  for i in range(puzzle_i + piece_size // 2, puzzle_i + rows, piece_size):
+    for j in range(puzzle_j + piece_size // 2, puzzle_j + cols, piece_size):
 
       # Randomly pick pieces to transform
-      if vis[i, j] == False and np.random.randint(1,20) == 1:
+      if vis[i - puzzle_i, j - puzzle_j] == False and np.random.randint(1,20) == 1:
         # Do a BFS to visit each pixel of the piece with center at (i, j)
         q = queue.Queue(maxsize = 0)
         q.put((i, j))
@@ -57,16 +57,16 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape):
             vx = [0, 1, 0, -1, 1, -1, 1, -1]
             vy = [1, 0, -1, 0, 1, 1, -1, -1]
             for k in range(0, 8):
-              if 0 <= x + vx[k] < rows and 0 <= y + vy[k] < cols and vis[x + vx[k], y + vy[k]] == False:
-                vis[x + vx[k], y + vy[k]] = True
+              if 0 <= x + vx[k] < rows and 0 <= y + vy[k] < cols and vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] == False:
+                vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] = True
                 puzzle_mask[x + vx[k], y + vy[k]] = 0
                 puzzle_image[x + vx[k], y + vy[k]] = 0
                 foreground_mask[x + vx[k], y + vy[k]] = 0
 
           # Iterate over adjacents
           for k in range(0, 4):
-            if 0 <= x + dx[k] < rows and 0 <= y + dy[k] < cols and vis[x + dx[k], y + dy[k]] == False:
-              vis[x + dx[k], y + dy[k]] = True
+            if 0 <= x + dx[k] < rows and 0 <= y + dy[k] < cols and vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] == False:
+              vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] = True
               q.put((x + dx[k], y + dy[k]))
 
     
