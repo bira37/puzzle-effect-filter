@@ -12,10 +12,11 @@ def apply_relief_and_shadow(puzzle_image, puzzle_mask):
   kernel = np.zeros((3,3))
   kernel[0,1] = -1
   kernel[2,1] = 1
-  kernel[0,0] = -1
-  kernel[2,2] = 1
-  effect_mask = cv2.filter2D(puzzle_mask, -1, kernel)
-  
+  kernel[1, 0] = -1
+  kernel[1, 2] = 1
+
+  effect_mask = cv2.filter2D(puzzle_mask, -1, kernel) 
+
   # Invert the mask
   effect_mask = 255 - effect_mask
 
