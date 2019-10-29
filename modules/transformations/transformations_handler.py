@@ -3,11 +3,7 @@ import numpy as np
 import queue
 
 # Input
-def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape, n_moving_pieces):
-
-  # Get piece size based on type
-  type_to_size = {'big':128, 'normal':64, 'small':32}
-  piece_size = type_to_size[piece_type]
+def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_moving_pieces):
 
   # Create visited matrix
   vis = np.zeros(puzzle_mask.shape)

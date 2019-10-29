@@ -29,8 +29,17 @@ def main():
     print('Error: {}'.format(err))
     exit(1)
   
+  # Get the size of the piece based on input
+  piece_size = -1
+  if args.type == 'small':
+    piece_size = 32
+  elif args.type == 'big':
+    piece_size = 128
+  else:
+    piece_size = 64
+  
   # Create the puzzle mask and the puzzle image
-  puzzle_image, puzzle_mask = puzzle_creation.create(original_image, args.type)
+  puzzle_image, puzzle_mask = puzzle_creation.create(original_image, piece_size)
 
   # Read background image
   background_image = cv2.imread(args.background_path)
@@ -45,7 +54,7 @@ def main():
   background_shape = background_image.shape
 
   # Transform image
-  puzzle_image, puzzle_mask, foreground_mask = transformations.transform_v1(puzzle_image, puzzle_mask, args.type, background_shape, args.n_moving_pieces)
+  puzzle_image, puzzle_mask, foreground_mask = transformations.transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, args.n_moving_pieces)
 
   # Add background to image
   puzzle_image = effects.add_background(background_image, puzzle_image, foreground_mask)
