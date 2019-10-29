@@ -168,13 +168,13 @@ def shifted_pieces(background_shape, piece_size,l_border,t_border):
     left_border = l_border - buffer
     right_border = background_shape[1] - left_border + buffer
     
-    random_y = np.random.randint(-buffer, background_shape[0]+buffer)
+    random_y = np.random.randint(-buffer//10, background_shape[0]+buffer//10)
     random_x = 0
   
     if(left_border > (0.8 * piece_size)):
       # Random on each side of the puzzle
-      random_left = np.random.randint(-buffer//2, left_border)
-      random_right = np.random.randint(right_border, background_shape[1] + buffer//2)
+      random_left = np.random.randint(-buffer//10, left_border)
+      random_right = np.random.randint(right_border, background_shape[1] + buffer//10)
       random_x = np.random.choice([random_left, random_right])
     
     else: dislocated_pieces = False
