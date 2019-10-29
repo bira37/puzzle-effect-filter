@@ -78,6 +78,11 @@ def create_puzzle_mask(height, width, piece_size, thickness):
 # Returns the image with the puzzle drawn and the puzzle mask
 def create(image, piece_size):
 
+  # Adjust the image size to make all pieces have the same size
+  row_leftover = image.shape[0]%piece_size
+  col_leftover = image.shape[1]%piece_size
+  image = cv2.resize(image, (image.shape[1] - col_leftover, image.shape[0] - row_leftover))
+
   # Create the puzzle based on piece size
   if piece_size == 32:
     puzzle_mask = create_puzzle_mask(2*image.shape[0], 2*image.shape[1], piece_size = 64, thickness = 3)
