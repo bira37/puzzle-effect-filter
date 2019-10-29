@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import queue
+import math
 
 # Input
 def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape, n_moving_pieces):
@@ -11,6 +12,10 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape, n_movi
 
   # Create visited matrix
   vis = np.zeros(puzzle_mask.shape)
+
+  # Initialize the record of the random places
+  random_x_record = []
+  random_y_record = []
 
   # Create offset lists
   dx = [-1,  0, 0, 1]
@@ -56,18 +61,53 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape, n_movi
     q = queue.Queue(maxsize = 0)
     q.put((i, j))
     vis[i - puzzle_i, j - puzzle_j] = True
+    
+    # Initialize variables and get random places on the padding
+    random_x = 0
+    random_y = 0
+    random_y, random_x, dislocated_pieces = shifted_pieces(background_shape, piece_size, puzzle_j, puzzle_i)
+    
+    # Check if there's enough room for the pieces on the sides and check for collisions
+    if(dislocated_pieces == True):
+      if random_x_record:
+        while True:
+            collision = collision_detection(piece_size, random_x, random_y, random_x_record, random_y_record)
+            if(collision == False):
+              break
+            
+            else:
+              random_y, random_x, dislocated_pieces = shifted_pieces(background_shape, piece_size, puzzle_j, puzzle_i)
+  
+      random_x_record.append(random_x)
+      random_y_record.append(random_y)
 
     while not q.empty():
       x, y = q.get()
+      
+      # Check if there's enough room for the pieces on the sides
+      if(dislocated_pieces == True):
+        
+        # Moving the removed pieces and their masks
+        coord_x = x - i + random_x
+        coord_y = y - j + random_y
+        
+        # Check if it's beyond the borders
+        if((0 < coord_x < background_shape[0]) and (0 < coord_y < background_shape[1])):   
+          puzzle_image[coord_x, coord_y] = puzzle_image[x, y]
+          foreground_mask[coord_x, coord_y] = foreground_mask[x, y]
 
-      # Turn each pixel from the piece with center at (i, j) black
+      # Turn each pixel from the piece with center at (i, j)
       puzzle_image[x, y] = 0
       foreground_mask[x, y] = 0
 
       # If it's a border, delete its neighbors and mark them as visited 
       if puzzle_mask[x,y] == 255:
+        if(dislocated_pieces == True):
+          # Check if it's beyond the borders
+          if((0 < coord_x < background_shape[0]) and (0 < coord_y < background_shape[1])): 
+            puzzle_mask[coord_x, coord_y] = puzzle_mask[x, y]
+
         puzzle_mask[x,y] = 0
-        puzzle_image[x,y] = 0
         foreground_mask[x, y] = 0
         vx = [0, 1, 0, -1, 1, -1, 1, -1]
         vy = [1, 0, -1, 0, 1, 1, -1, -1]
@@ -122,8 +162,42 @@ def add_padding(image, padding_shape):
 
   return padded_image, left_corner_x, left_corner_y
 
+def shifted_pieces(background_shape, piece_size,l_border,t_border):
+    dislocated_pieces = True
+    buffer = piece_size + 1 # Avoid error when n == n
+    left_border = l_border - buffer
+    right_border = background_shape[1] - left_border + buffer
+    
+    random_y = np.random.randint(-buffer, background_shape[0]+buffer)
+    random_x = 0
+  
+    if(left_border > (0.8 * piece_size)):
+      # Random on each side of the puzzle
+      random_left = np.random.randint(-buffer//2, left_border)
+      random_right = np.random.randint(right_border, background_shape[1] + buffer//2)
+      random_x = np.random.choice([random_left, random_right])
+    
+    else: dislocated_pieces = False
+       
+    return int(random_x), int(random_y), dislocated_pieces
+
 def index_to_coordinate(index, piece_size):
   i, j = index
   i_coord = i * piece_size + piece_size // 2
   j_coord = j * piece_size + piece_size // 2
   return i_coord, j_coord 
+
+def collision_detection(piece_size, pt1_x, pt1_y,x_values = [], y_values = []):
+  diagonal = piece_size * 0.8
+  distance = []
+  
+  for piece in range(0, len(x_values)):
+    distance.append(math.sqrt(((pt1_x - x_values[piece]) ** 2) + ((pt1_y - y_values[piece]) ** 2)))
+    if(distance[piece] > 2 * diagonal):
+      collision = False
+    
+    else:
+      collision = True
+      break
+    
+  return collision
