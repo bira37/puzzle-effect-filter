@@ -67,7 +67,6 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape, n_movi
       # If it's a border, delete its neighbors and mark them as visited 
       if puzzle_mask[x,y] == 255:
         puzzle_mask[x,y] = 0
-        puzzle_image[x,y] = 0
         foreground_mask[x, y] = 0
         vx = [0, 1, 0, -1, 1, -1, 1, -1]
         vy = [1, 0, -1, 0, 1, 1, -1, -1]
@@ -77,6 +76,7 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape, n_movi
             puzzle_mask[x + vx[k], y + vy[k]] = 0
             puzzle_image[x + vx[k], y + vy[k]] = 0
             foreground_mask[x + vx[k], y + vy[k]] = 0
+        continue
 
       # Iterate over adjacents
       for k in range(0, 4):
@@ -84,12 +84,21 @@ def transform_v1(puzzle_image, puzzle_mask, piece_type, background_shape, n_movi
           vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] = True
           q.put((x + dx[k], y + dy[k]))
 
-  # Fix some borders imperfections when pieces are deleted
-  kernel = np.ones((7,7), dtype=np.int16)
-  kernel[3,3] = 0
-  filtered_mask = puzzle_mask.astype(np.int16)
-  filtered_mask = cv2.filter2D(filtered_mask, -1, kernel)
-  puzzle_mask[filtered_mask <= 255] = 0
+  # Filter similar to erosion to fix some borders imperfections when pieces are deleted
+  for iter in range(2):
+    kernel = np.ones((9,9), dtype=np.int16)
+    kernel[4,4] = 0
+    filtered_mask = puzzle_mask.astype(np.int16)
+    filtered_mask = cv2.filter2D(filtered_mask, -1, kernel)
+
+    # Apply corrections on foreground_mask
+    correction_mask = np.zeros(filtered_mask.shape, dtype = np.uint8)
+    correction_mask[filtered_mask <= 255*5] = 255
+    correction_mask = cv2.bitwise_or(correction_mask, correction_mask, mask = puzzle_mask)
+    foreground_mask[correction_mask == 255] = 0
+
+    # Apply corrections on puzzle_mask
+    puzzle_mask[filtered_mask <= 255*5] = 0
 
   # Delete borders from foreground
   foreground_mask[puzzle_mask == 255] = 0  
