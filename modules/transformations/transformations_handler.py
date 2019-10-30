@@ -9,8 +9,8 @@ def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_movi
   vis = np.zeros(puzzle_mask.shape)
 
   # Create offset lists
-  dx = [-1,  0, 0, 1]
-  dy = [ 0, -1, 1, 0]
+  dy = [-1,  0, 0, 1]
+  dx = [ 0, -1, 1, 0]
 
   # Create variables for rows and cols
   rows = puzzle_image.shape[0]
@@ -52,18 +52,18 @@ def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_movi
     i += puzzle_i
     j += puzzle_j
 
-    # Get the translation offset (tx,ty) and rotation angle in degrees for this piece
+    # Get the translation offset (ty,tx) and rotation angle in degrees for this piece
     # If there's no space left in background, the piece is just deleted
-    tx = 0
     ty = 0
+    tx = 0
     rotation_angle = 0
     if ind < len(transformations):
       rotation_angle = np.random.randint(0, 361)
-      offx, offy = transformations[ind]
-      tx = - (i - puzzle_i) + offx
-      ty = - (j - puzzle_j) + offy
-    cx = i + tx
-    cy = j + ty
+      offy, offx = transformations[ind]
+      ty = - (i - puzzle_i) + offy
+      tx = - (j - puzzle_j) + offx
+    cy = i + ty
+    cx = j + tx
     
 
     # Do a BFS to visit each pixel of the piece with center at (i, j)
@@ -72,49 +72,49 @@ def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_movi
     vis[i - puzzle_i, j - puzzle_j] = True
 
     while not q.empty():
-      x, y = q.get()
+      y, x = q.get()
 
       # Apply the translation and rotation to the piece pixel before deleting it
-      newx = x + tx
       newy = y + ty
-      newx, newy = rotate_around((cx,cy), (newx, newy), rotation_angle)
-      if(0 <= newx < puzzle_image.shape[0] and 0 <= newy < puzzle_image.shape[1]):
-        puzzle_image[newx, newy] = puzzle_image[x,y]
-        puzzle_mask[newx, newy] = puzzle_mask[x,y]
-        foreground_mask[newx, newy] = foreground_mask[x,y]
+      newx = x + tx
+      newy, newx = rotate_around((cy,cx), (newy, newx), rotation_angle)
+      if(0 <= newy < puzzle_image.shape[0] and 0 <= newx < puzzle_image.shape[1]):
+        puzzle_image[newy, newx] = puzzle_image[y,x]
+        puzzle_mask[newy, newx] = puzzle_mask[y,x]
+        foreground_mask[newy, newx] = foreground_mask[y,x]
 
       # Turn each pixel from the piece with center at (i, j) black
-      puzzle_image[x, y] = 0
-      foreground_mask[x, y] = 0
+      puzzle_image[y, x] = 0
+      foreground_mask[y, x] = 0
 
       # If it's a border, delete its neighbors and mark them as visited 
-      if puzzle_mask[x,y] == 255:
-        puzzle_mask[x,y] = 0
-        foreground_mask[x, y] = 0
-        vx = [0, 1, 0, -1, 1, -1, 1, -1]
-        vy = [1, 0, -1, 0, 1, 1, -1, -1]
+      if puzzle_mask[y,x] == 255:
+        puzzle_mask[y,x] = 0
+        foreground_mask[y, x] = 0
+        vy = [0, 1, 0, -1, 1, -1, 1, -1]
+        vx = [1, 0, -1, 0, 1, 1, -1, -1]
         for k in range(0, 8):
-          if puzzle_i <= x + vx[k] < rows + puzzle_i and puzzle_j <= y + vy[k] < cols + puzzle_j and vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] == False:
+          if puzzle_i <= y + vy[k] < rows + puzzle_i and puzzle_j <= x + vx[k] < cols + puzzle_j and vis[y + vy[k] - puzzle_i, x + vx[k] - puzzle_j] == False:
             # Apply the translation and rotation to the piece at the border before deleting it
-            newx = x + vx[k] + tx
             newy = y + vy[k] + ty
-            newx, newy = rotate_around((cx,cy), (newx, newy), rotation_angle)
-            if(0 <= newx < puzzle_image.shape[0] and 0 <= newy < puzzle_image.shape[1]):
-              puzzle_image[newx, newy] = puzzle_image[x + vx[k], y + vy[k]]
-              puzzle_mask[newx, newy] = puzzle_mask[x + vx[k], y + vy[k]]
-              foreground_mask[newx, newy] = foreground_mask[x + vx[k], y + vy[k]]
+            newx = x + vx[k] + tx
+            newy, newx = rotate_around((cy,cx), (newy, newx), rotation_angle)
+            if(0 <= newy < puzzle_image.shape[0] and 0 <= newx < puzzle_image.shape[1]):
+              puzzle_image[newy, newx] = puzzle_image[y + vy[k], x + vx[k]]
+              puzzle_mask[newy, newx] = puzzle_mask[y + vy[k], x + vx[k]]
+              foreground_mask[newy, newx] = foreground_mask[y + vy[k], x + vx[k]]
             
-            vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] = True
-            puzzle_mask[x + vx[k], y + vy[k]] = 0
-            puzzle_image[x + vx[k], y + vy[k]] = 0
-            foreground_mask[x + vx[k], y + vy[k]] = 0
+            vis[y + vy[k] - puzzle_i, x + vx[k] - puzzle_j] = True
+            puzzle_mask[y + vy[k], x + vx[k]] = 0
+            puzzle_image[y + vy[k], x + vx[k]] = 0
+            foreground_mask[y + vy[k], x + vx[k]] = 0
         continue
 
       # Iterate over adjacents
       for k in range(0, 4):
-        if puzzle_i <= x + dx[k] < rows + puzzle_i and 0 <= y + dy[k] < cols + puzzle_j and vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] == False:
-          vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] = True
-          q.put((x + dx[k], y + dy[k]))
+        if puzzle_i <= y + dy[k] < rows + puzzle_i and 0 <= x + dx[k] < cols + puzzle_j and vis[y + dy[k] - puzzle_i, x + dx[k] - puzzle_j] == False:
+          vis[y + dy[k] - puzzle_i, x + dx[k] - puzzle_j] = True
+          q.put((y + dy[k], x + dx[k]))
   
   # Filter similar to erosion to fix some borders imperfections when pieces are deleted
   for iter in range(2):
@@ -150,18 +150,18 @@ def add_padding(image, padding_shape):
   # Create empty image
   padded_image = np.zeros((padding_shape[0], padding_shape[1], image.shape[2]), dtype=np.uint8)
 
-  # Calculate image left corner x position
-  left_corner_x = padding_shape[0] - image.shape[0]
-  left_corner_x //= 2
-
   # Calculate image left corner y position
-  left_corner_y = padding_shape[1] - image.shape[1]
+  left_corner_y = padding_shape[0] - image.shape[0]
   left_corner_y //= 2
 
-  # Center image on padded image
-  padded_image[left_corner_x:left_corner_x + image.shape[0], left_corner_y:left_corner_y + image.shape[1]] = image
+  # Calculate image left corner x position
+  left_corner_x = padding_shape[1] - image.shape[1]
+  left_corner_x //= 2
 
-  return padded_image, left_corner_x, left_corner_y
+  # Center image on padded image
+  padded_image[left_corner_y:left_corner_y + image.shape[0], left_corner_x:left_corner_x + image.shape[1]] = image
+
+  return padded_image, left_corner_y, left_corner_x
 
 def index_to_coordinate(index, piece_size):
   i, j = index
@@ -214,19 +214,19 @@ def make_transformations(piece_size, padding_height, padding_width, image_height
 # Rotate a point around the center by the given value of degrees
 def rotate_around(center, point, degree):
 
-  x,y = point
-  cx, cy = center
+  y,x = point
+  cy, cx = center
   radians = np.pi * (degree/180)
   
   # Translate point to space where center is the origin
-  x -= cx
   y -= cy
+  x -= cx
 
   # Rotate
-  x, y = x*np.cos(radians) - y*np.sin(radians), x*np.sin(radians) + y*np.cos(radians)
+  y, x = y*np.cos(radians) - x*np.sin(radians), y*np.sin(radians) + x*np.cos(radians)
 
   # Translate back to original space
-  x = int(x) + cx
   y = int(y) + cy
+  x = int(x) + cx
 
-  return x,y
+  return y,x
