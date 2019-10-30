@@ -38,6 +38,10 @@ def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_movi
   # n_moving_pices = number of pieces
   n_moving_pieces = np.minimum(len(indices), n_moving_pieces)
 
+  # Generate all possible positions for translate the pieces and permutate them
+  transformations = make_transformations(piece_size, puzzle_i, puzzle_j, rows, cols)
+  transformations = np.random.permutation(transformations)
+
   # iterate over pieces indices 
   for ind in range(0, n_moving_pieces):
     
@@ -48,6 +52,20 @@ def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_movi
     i += puzzle_i
     j += puzzle_j
 
+    # Get the translation offset (tx,ty) and rotation angle in degrees for this piece
+    # If there's no space left in background, the piece is just deleted
+    tx = 0
+    ty = 0
+    rotation_angle = 0
+    if ind < len(transformations):
+      rotation_angle = np.random.randint(0, 361)
+      offx, offy = transformations[ind]
+      tx = - (i - puzzle_i) + offx
+      ty = - (j - puzzle_j) + offy
+    cx = i + tx
+    cy = j + ty
+    
+
     # Do a BFS to visit each pixel of the piece with center at (i, j)
     q = queue.Queue(maxsize = 0)
     q.put((i, j))
@@ -55,6 +73,15 @@ def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_movi
 
     while not q.empty():
       x, y = q.get()
+
+      # Apply the translation and rotation to the piece pixel before deleting it
+      newx = x + tx
+      newy = y + ty
+      newx, newy = rotate_around((cx,cy), (newx, newy), rotation_angle)
+      if(0 <= newx < puzzle_image.shape[0] and 0 <= newy < puzzle_image.shape[1]):
+        puzzle_image[newx, newy] = puzzle_image[x,y]
+        puzzle_mask[newx, newy] = puzzle_mask[x,y]
+        foreground_mask[newx, newy] = foreground_mask[x,y]
 
       # Turn each pixel from the piece with center at (i, j) black
       puzzle_image[x, y] = 0
@@ -68,6 +95,15 @@ def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_movi
         vy = [1, 0, -1, 0, 1, 1, -1, -1]
         for k in range(0, 8):
           if puzzle_i <= x + vx[k] < rows + puzzle_i and puzzle_j <= y + vy[k] < cols + puzzle_j and vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] == False:
+            # Apply the translation and rotation to the piece at the border before deleting it
+            newx = x + vx[k] + tx
+            newy = y + vy[k] + ty
+            newx, newy = rotate_around((cx,cy), (newx, newy), rotation_angle)
+            if(0 <= newx < puzzle_image.shape[0] and 0 <= newy < puzzle_image.shape[1]):
+              puzzle_image[newx, newy] = puzzle_image[x + vx[k], y + vy[k]]
+              puzzle_mask[newx, newy] = puzzle_mask[x + vx[k], y + vy[k]]
+              foreground_mask[newx, newy] = foreground_mask[x + vx[k], y + vy[k]]
+            
             vis[x + vx[k] - puzzle_i, y + vy[k] - puzzle_j] = True
             puzzle_mask[x + vx[k], y + vy[k]] = 0
             puzzle_image[x + vx[k], y + vy[k]] = 0
@@ -79,7 +115,7 @@ def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_movi
         if puzzle_i <= x + dx[k] < rows + puzzle_i and 0 <= y + dy[k] < cols + puzzle_j and vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] == False:
           vis[x + dx[k] - puzzle_i, y + dy[k] - puzzle_j] = True
           q.put((x + dx[k], y + dy[k]))
-
+  
   # Filter similar to erosion to fix some borders imperfections when pieces are deleted
   for iter in range(2):
     kernel = np.ones((9,9), dtype=np.int16)
@@ -132,3 +168,65 @@ def index_to_coordinate(index, piece_size):
   i_coord = i * piece_size + piece_size // 2
   j_coord = j * piece_size + piece_size // 2
   return i_coord, j_coord 
+
+# Function that create translation offsets for removed pieces
+# Returns a tuple (translate_row, translate_col) representing the translation on both axis
+def make_transformations(piece_size, padding_height, padding_width, image_height, image_width):
+
+  offsets = []
+  ind = 0
+
+  # Create all transformations on left and right sides
+  while ind*2*piece_size <= image_height:
+
+    width_offset = 0
+    while width_offset < padding_width - piece_size:
+
+      # Left
+      offsets.append((np.random.randint(ind*2*piece_size, ind*2*piece_size+piece_size//2), - width_offset - np.random.randint(piece_size, 2*piece_size - piece_size//2)))
+
+      # Right
+      offsets.append((np.random.randint(ind*2*piece_size, ind*2*piece_size+piece_size//2), image_width + width_offset + np.random.randint(piece_size, 2*piece_size - piece_size//2)))
+
+      width_offset += 2*piece_size
+
+    ind += 1
+  
+  ind = 0
+
+  # Create all transformations for up and down
+  while ind*2*piece_size < image_width:
+
+    height_offset = 0
+    while height_offset < padding_height - piece_size:
+      # Up
+      offsets.append((- height_offset - np.random.randint(piece_size, 2*piece_size - piece_size//2), np.random.randint(ind*2*piece_size, ind*2*piece_size+piece_size//2)))
+
+      # Down
+      offsets.append((height_offset + image_height + np.random.randint(piece_size, 2*piece_size - piece_size//2), np.random.randint(ind*2*piece_size, ind*2*piece_size+piece_size//2)))
+
+      height_offset += 2*piece_size
+
+    ind += 1
+  
+  return np.array(offsets)
+
+# Rotate a point around the center by the given value of degrees
+def rotate_around(center, point, degree):
+
+  x,y = point
+  cx, cy = center
+  radians = np.pi * (degree/180)
+  
+  # Translate point to space where center is the origin
+  x -= cx
+  y -= cy
+
+  # Rotate
+  x, y = x*np.cos(radians) - y*np.sin(radians), x*np.sin(radians) + y*np.cos(radians)
+
+  # Translate back to original space
+  x = int(x) + cx
+  y = int(y) + cy
+
+  return x,y
