@@ -2,8 +2,9 @@ import cv2
 import numpy as np
 import queue
 
+
 # Input
-def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_moving_pieces):
+def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_moving_pieces, select_pieces):
 
   # Create visited matrix
   vis = np.zeros(puzzle_mask.shape)
@@ -32,11 +33,15 @@ def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_movi
   # create array with pieces indices
   indices = np.indices((rows // piece_size, cols // piece_size)).transpose((1, 2, 0))
   indices = indices.reshape(((rows // piece_size * cols // piece_size), 2))
-  indices = np.random.permutation(indices)
+  if(select_pieces == False):
+    indices = np.random.permutation(indices)
   
   # if n_moving_pieces is bigger than the number of pieces
   # n_moving_pices = number of pieces
   n_moving_pieces = np.minimum(len(indices), n_moving_pieces)
+  
+  if(select_pieces == True):
+    order = piece_selection(indices, puzzle_image, piece_size, puzzle_j, puzzle_i, n_moving_pieces)
 
   # Generate all possible positions for translate the pieces and permutate them
   transformations = make_transformations(piece_size, puzzle_i, puzzle_j, rows, cols)
@@ -46,7 +51,10 @@ def transform_v1(puzzle_image, puzzle_mask, piece_size, background_shape, n_movi
   for ind in range(0, n_moving_pieces):
     
     # get image coordinate from index
-    i, j = index_to_coordinate(indices[ind], piece_size)
+    if(select_pieces == False):
+      i, j = index_to_coordinate(indices[ind], piece_size)
+    else:
+      i, j = index_to_coordinate(indices[order[ind]], piece_size)
     
     # add image offset to coordinates
     i += puzzle_i
@@ -230,3 +238,51 @@ def rotate_around(center, point, degree):
   x = int(x) + cx
 
   return y,x
+
+def piece_selection(indices, image, piece_size, puzzle_j, puzzle_i, n_moving_pieces):
+  board = image.copy()
+  
+  # Set the text format
+  font = cv2.FONT_HERSHEY_SIMPLEX
+  font_size = piece_size / 100
+  font_color = (0,0,0)
+  
+  # Add a number for each piece, according to the indices' rows
+  for ind in range(0, len(indices[:,0])):
+    k,l = index_to_coordinate(indices[ind], piece_size)
+    n_piece = str(ind)
+    textsize = cv2.getTextSize(n_piece, font, font_size, 2)[0]
+    k += (piece_size - textsize[0]) // 2 + puzzle_j - piece_size //2
+    l += (piece_size + textsize[1]) // 2 + puzzle_i - piece_size //2
+    
+    # Add a background to the text, for an easier visualization
+    box_coords = ((k, l + 1), (k + textsize[0] - 2,l - textsize[1] - 2))
+    cv2.rectangle(board, box_coords[0], box_coords[1], (255,255,255), cv2.FILLED)
+    cv2.putText(board, n_piece, (k,l), font, font_size, font_color, 1, cv2.LINE_AA)
+  
+  # Show the board with the numbers
+  cv2.imshow('Removed pieces selection', board)
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
+  
+  order = []
+  while True:
+    try:
+      order = list(map(int,input('\nEnter the {0} numbers separated by spaces : '.format(n_moving_pieces)).strip().split()))[:n_moving_pieces]
+      
+      if((len(order) == n_moving_pieces) and (all(x <= len(indices[:,0]) for x in order))):
+        break
+      
+      elif(any(x > len(indices[:,0]) for x in order)):
+        print('Numbers must be bellow {0}.'.format(len(indices[:,0])))
+
+      else: 
+        print('Not enough numbers. You must type: {0}.'.format(n_moving_pieces))
+    
+    except ValueError:
+      print('Not valid numbers.')
+      continue
+
+  indices[:,0], indices[:,1] = indices[:,1], indices[:,0].copy()
+
+  return order
