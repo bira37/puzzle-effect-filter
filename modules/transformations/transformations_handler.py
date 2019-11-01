@@ -241,14 +241,14 @@ def rotate_around(center, point, degree):
 
 def piece_selection(indices, image, piece_size, puzzle_j, puzzle_i, n_moving_pieces):
   board = image.copy()
-  
+  number_of_pieces = len(indices[:,0])
   # Set the text format
   font = cv2.FONT_HERSHEY_SIMPLEX
   font_size = piece_size / 100
   font_color = (0,0,0)
   
   # Add a number for each piece, according to the indices' rows
-  for ind in range(0, len(indices[:,0])):
+  for ind in range(0, number_of_pieces):
     k,l = index_to_coordinate(indices[ind], piece_size)
     n_piece = str(ind)
     textsize = cv2.getTextSize(n_piece, font, font_size, 2)[0]
@@ -260,32 +260,37 @@ def piece_selection(indices, image, piece_size, puzzle_j, puzzle_i, n_moving_pie
     cv2.rectangle(board, box_coords[0], box_coords[1], (255,255,255), cv2.FILLED)
     cv2.putText(board, n_piece, (k,l), font, font_size, font_color, 1, cv2.LINE_AA)
   
-  
-  
-  
   order = []
   while True:
     
     # Show the board with the numbers
-    cv2.imshow('Removed pieces selection', board)
+    cv2.imshow('Removed Pieces Selection', board)
     cv2.waitKey(1000)
 
+    # Get user input
     try:
-      print()
-      order = list(map(int,input('\nEnter the {0} numbers separated by spaces or enter \'-1\' to exit : '.format(n_moving_pieces)).strip().split()))[:n_moving_pieces]
+      order = list(map(int,input('\nEnter the {0} numbers separated by spaces or enter \'-1\' to exit : '.format(n_moving_pieces)).strip().split()))
       
+      # If user digits -1, exit program
       if(any(x == -1 for x in order)):
         exit(0)
 
-      elif((len(order) == n_moving_pieces) and (all(x <= len(indices[:,0]) for x in order)) and all(x >= 0 for x in order)):
-        break
-      
-      elif(any(x < -1 for x in order) or (any(x > len(indices[:,0])) for x in order)):
-        print('All numbers must be between 0 and {0}'.format(len(indices[:,0])-1))
+      # If any number is greater or equal than the number of pieces, or less than zero, ignore input and try again
+      elif(any(x < -1 for x in order) or any(x >= number_of_pieces for x in order)):
+        print('All numbers must be between 0 and {0}'.format(number_of_pieces-1))
 
-      else: 
-        print('Not enough numbers. You must type: {0}.'.format(n_moving_pieces))
-    
+      # If the user did not give the correct amount of numbers, ignore and try again
+      elif(len(order) != n_moving_pieces): 
+        print('Wrong number of pieces. You must type {0} different numbers.'.format(n_moving_pieces))
+
+      # If the user gives duplicate numbers, ignore and try again
+      elif len(order) != len(set(order)):
+        print('The list contains duplicates. You must type {0} different numbers.'.format(n_moving_pieces))
+      
+      # If list is ok, break the loop
+      elif((len(order) == n_moving_pieces) and (all(x < number_of_pieces for x in order)) and all(x >= 0 for x in order)):
+        break
+
     except ValueError:
       print('Not valid numbers.')
       continue
@@ -293,4 +298,5 @@ def piece_selection(indices, image, piece_size, puzzle_j, puzzle_i, n_moving_pie
   cv2.destroyAllWindows()
   indices[:,0], indices[:,1] = indices[:,1], indices[:,0].copy()
 
+  # Return the values
   return np.array(order)
