@@ -260,21 +260,31 @@ def piece_selection(indices, image, piece_size, puzzle_j, puzzle_i, n_moving_pie
     cv2.rectangle(board, box_coords[0], box_coords[1], (255,255,255), cv2.FILLED)
     cv2.putText(board, n_piece, (k,l), font, font_size, font_color, 1, cv2.LINE_AA)
   
-  # Show the board with the numbers
-  cv2.imshow('Removed pieces selection', board)
-  cv2.waitKey(0)
-  cv2.destroyAllWindows()
+  
+  
   
   order = []
   while True:
+    
+    # Show the board with the numbers
+    cv2.imshow('Removed pieces selection', board)
+    cv2.waitKey(1000)
+
     try:
-      order = list(map(int,input('\nEnter the {0} numbers separated by spaces : '.format(n_moving_pieces)).strip().split()))[:n_moving_pieces]
+      print()
+      order = list(map(int,input('\nEnter the {0} numbers separated by spaces or enter \'-1\' to exit : '.format(n_moving_pieces)).strip().split()))[:n_moving_pieces]
       
-      if((len(order) == n_moving_pieces) and (all(x <= len(indices[:,0]) for x in order))):
+      if(any(x == -1 for x in order)):
+        exit(0)
+
+      elif((len(order) == n_moving_pieces) and (all(x <= len(indices[:,0]) for x in order)) and all(x >= 0 for x in order)):
         break
       
       elif(any(x > len(indices[:,0]) for x in order)):
-        print('Numbers must be bellow {0}.'.format(len(indices[:,0])))
+        print('Numbers must be below {0}.'.format(len(indices[:,0])))
+
+      elif(any(x < -1 for x in order) or (any(x > len(indices[:,0])) for x in order)):
+        print('All numbers must be between 0 and {0}'.format(len(indices[:,0])))
 
       else: 
         print('Not enough numbers. You must type: {0}.'.format(n_moving_pieces))
@@ -282,7 +292,8 @@ def piece_selection(indices, image, piece_size, puzzle_j, puzzle_i, n_moving_pie
     except ValueError:
       print('Not valid numbers.')
       continue
-
+  
+  cv2.destroyAllWindows()
   indices[:,0], indices[:,1] = indices[:,1], indices[:,0].copy()
 
-  return order
+  return np.array(order)
