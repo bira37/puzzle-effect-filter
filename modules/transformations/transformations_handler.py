@@ -280,11 +280,8 @@ def piece_selection(indices, image, piece_size, puzzle_j, puzzle_i, n_moving_pie
       elif((len(order) == n_moving_pieces) and (all(x <= len(indices[:,0]) for x in order)) and all(x >= 0 for x in order)):
         break
       
-      elif(any(x > len(indices[:,0]) for x in order)):
-        print('Numbers must be below {0}.'.format(len(indices[:,0])))
-
       elif(any(x < -1 for x in order) or (any(x > len(indices[:,0])) for x in order)):
-        print('All numbers must be between 0 and {0}'.format(len(indices[:,0])))
+        print('All numbers must be between 0 and {0}'.format(len(indices[:,0])-1))
 
       else: 
         print('Not enough numbers. You must type: {0}.'.format(n_moving_pieces))
