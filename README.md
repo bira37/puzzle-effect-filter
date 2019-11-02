@@ -27,7 +27,7 @@ Run 'python3 -m run -h' to see more informations
 python3 -m run
 ```
 
-![Basic Example](examples/results/basic.png)
+![Basic Example](examples/results/default.png)
 
 **Removing 15 pieces** 
 
