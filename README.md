@@ -22,14 +22,14 @@ Run 'python3 -m run -h' to see more informations
 
 ### Examples
 
-** Basic Example **
+**Basic Example**
 ```
 python3 -m run
 ```
 
 ![Basic Example](examples/results/basic.png)
 
-** Removing 15 pieces ** 
+**Removing 15 pieces** 
 
 ```
 python3 -m run -n 15
@@ -37,7 +37,7 @@ python3 -m run -n 15
 
 ![Remove 15 Pieces](examples/results/remove15.png)
 
-** Add background and use piece size of 40x40 removing 5 pieces **
+**Add background and use piece size of 40x40 removing 5 pieces**
 
 ```
 python3 -m run -n 5 -b examples/wooden_table.png -p 40
@@ -45,7 +45,7 @@ python3 -m run -n 5 -b examples/wooden_table.png -p 40
 
 ![Remove 5 Pieces 40x40 from image with background](examples/results/back40_remove5.png)
 
-** Select and Remove pieces 26 and 45 from the puzzle **
+**Select and Remove pieces 26 and 45 from the puzzle**
 
 ```
 python3 -m run -o examples/results/select2_back.png -n 2 -b examples/wooden_table.png -s
