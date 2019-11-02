@@ -16,7 +16,7 @@ def main():
   parser.add_argument('-n', '--n_moving_pieces', dest='n_moving_pieces', metavar='', type=int, default=3, help='Number of pieces that are going to be moved. If the number given is bigger than the number of pieces, the default behaviour is to assume n_moving_pieces = number of pieces in the puzzle. Default number is 3.')
   parser.add_argument('-o', '--output_path', dest='output_path', metavar='', type=str, default='output.png', help='Path to save the output image (directory and name). Make sure that the directory exists. Default is \'output.png\'.')
   parser.add_argument('-p', '--piece_size', dest='piece_size', metavar='', type=int, default=64, help='Size of the puzzle pieces. This number must be bigger or equal than 32. Default is 64.')
-  parser.add_argument('-s', '--select_pieces', dest='select_pieces', metavar='', type=bool, default=False, help='Selection of which pieces should be removed. Enter \'True\' to select. Default is \'False\'.')
+  parser.add_argument('-s', '--select_pieces', action='store_true', dest='select_pieces', default=False, help='Selection of which pieces should be removed. Enter \'True\' to select. Default is \'False\'.')
   parser.add_argument('-r', '--random_seed', dest = 'random_seed', metavar='', type=int, default=-1, help='Seed for the random generator. The number must be greater than zero. Default does not fix a seed.')
   args = parser.parse_args()
 
